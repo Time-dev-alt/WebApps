@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartField - Sustainable Agriculture Management</title>
+  <meta name="description" content="Real-time smart field monitoring and sustainable agriculture management. Track soil health, optimize resources, and increase yields with intelligent farming technology.">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Recharts -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #fafafa;
+      color: #1e1e1e;
+    }
+    
+    body.dark {
+      background-color: #141414;
+      color: #ebebeb;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 0.5rem;
+      border: 1px solid #e0e0e0;
+      overflow: hidden;
+    }
+    
+    body.dark .card {
+      background: #1a1a1a;
+      border-color: #2e2e2e;
+    }
+    
+    .sidebar {
+      background: #f0f0f0;
+      border-right: 1px solid #e0e0e0;
+    }
+    
+    body.dark .sidebar {
+      background: #1e1e1e;
+      border-color: #2e2e2e;
+    }
+    
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary {
+      background: #2d7a4f;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #256340;
+    }
+    
+    .btn-secondary {
+      background: #e8e8e8;
+      color: #242424;
+    }
+    
+    body.dark .btn-secondary {
+      background: #383838;
+      color: #e6e6e6;
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      color: #1e1e1e;
+    }
+    
+    body.dark .btn-ghost {
+      color: #ebebeb;
+    }
+    
+    .btn-ghost:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    
+    body.dark .btn-ghost:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+    
+    .badge-high {
+      background: #993030;
+      color: white;
+    }
+    
+    .badge-medium {
+      background: #f59e0b;
+      color: white;
+    }
+    
+    .badge-low {
+      background: #d8d8d8;
+      color: #525252;
+    }
+    
+    .nav-item {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      border-radius: 0.375rem;
+      transition: background 0.2s;
+      color: #1e1e1e;
+    }
+    
+    body.dark .nav-item {
+      color: #ebebeb;
+    }
+    
+    .nav-item:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    
+    body.dark .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .nav-item.active {
+      background: #d1e8dd;
+      color: #2d7a4f;
+    }
+    
+    body.dark .nav-item.active {
+      background: #2d4738;
+      color: #6bbd8f;
+    }
+    
+    .zone-card {
+      padding: 1rem;
+      border-radius: 0.375rem;
+      border: 2px solid;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .zone-card:hover {
+      transform: translateY(-2px);
+    }
+    
+    .zone-good {
+      background: rgba(45, 122, 79, 0.1);
+      border-color: #2d7a4f;
+    }
+    
+    .zone-warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: #f59e0b;
+    }
+    
+    .zone-critical {
+      background: rgba(153, 48, 48, 0.1);
+      border-color: #993030;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d4d4d4;
+      border-radius: 0.375rem;
+      background: white;
+      color: #1e1e1e;
+    }
+    
+    body.dark input,
+    body.dark select {
+      background: #292929;
+      border-color: #525252;
+      color: #ebebeb;
+    }
+    
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #d4d4d4;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .switch.active {
+      background: #2d7a4f;
+    }
+    
+    .switch-handle {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    
+    .switch.active .switch-handle {
+      transform: translateX(20px);
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: #e8e8e8;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    body.dark .progress-bar {
+      background: #2e2e2e;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #2d7a4f;
+      transition: width 0.3s;
+    }
+    
+    .hero {
+      position: relative;
+      height: 40vh;
+      min-height: 300px;
+      background: linear-gradient(135deg, #2d7a4f 0%, #4a9d6f 100%);
+      overflow: hidden;
+    }
+    
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.5), transparent);
+    }
+    
+    .hero-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding: 2rem;
+      color: white;
+    }
+    
+    .stat-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 0.375rem;
+      padding: 1rem;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 flex-shrink-0 flex flex-col">
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-2">
+          <div class="flex h-10 w-10 items-center justify-center rounded-md bg-green-700 text-white">
+            <i data-lucide="sprout" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold">SmartField</h2>
+            <p class="text-xs text-gray-500">Sustainable Agriculture</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex-1 p-4">
+        <nav class="space-y-1">
+          <div class="nav-item active" data-page="dashboard">
+            <i data-lucide="home" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </div>
+          <div class="nav-item" data-page="analytics">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            <span>Analytics</span>
+          </div>
+          <div class="nav-item" data-page="tasks">
+            <i data-lucide="list-todo" class="w-5 h-5"></i>
+            <span>Tasks</span>
+          </div>
+          <div class="nav-item" data-page="settings">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span>Settings</span>
+          </div>
+        </nav>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <header class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div></div>
+        <button class="btn btn-ghost" id="themeToggle">
+          <i data-lucide="moon" class="w-5 h-5"></i>
+        </button>
+      </header>
+      
+      <!-- Page Content -->
+      <main class="flex-1 overflow-auto">
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page">
+          <div class="hero">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+              <div class="max-w-2xl">
+                <h1 class="text-4xl font-bold mb-2">Green Valley Farm</h1>
+                <p class="text-lg mb-4">Real-time monitoring across 46.8 acres</p>
+                <div class="flex gap-4">
+                  <div class="stat-card">
+                    <p class="text-xs text-white/80">Total Area</p>
+                    <p class="text-xl font-semibold">46.8 acres</p>
+                  </div>
+                  <div class="stat-card">
+                    <p class="text-xs text-white/80">Average Health</p>
+                    <p class="text-xl font-semibold">88%</p>
+                  </div>
+                  <div class="stat-card">
+                    <p class="text-xs text-white/80">Active Zones</p>
+                    <p class="text-xl font-semibold">4</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="p-6 space-y-6">
+            <!-- Metric Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="card p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-sm text-gray-500">Avg Soil Moisture</p>
+                  <i data-lucide="droplets" class="w-4 h-4 text-green-700"></i>
+                </div>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-2xl font-semibold">65</span>
+                  <span class="text-sm text-gray-500">%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Optimal range</p>
+              </div>
+              
+              <div class="card p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-sm text-gray-500">Avg Temperature</p>
+                  <i data-lucide="thermometer" class="w-4 h-4 text-green-700"></i>
+                </div>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-2xl font-semibold">22</span>
+                  <span class="text-sm text-gray-500">°C</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Normal range</p>
+              </div>
+              
+              <div class="card p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-sm text-gray-500">Overall Health</p>
+                  <i data-lucide="activity" class="w-4 h-4 text-green-700"></i>
+                </div>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-2xl font-semibold">88</span>
+                  <span class="text-sm text-gray-500">%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">4 zones monitored</p>
+              </div>
+              
+              <div class="card p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-sm text-gray-500">Active Alerts</p>
+                  <i data-lucide="alert-triangle" class="w-4 h-4 text-orange-500"></i>
+                </div>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-2xl font-semibold">1</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Requires attention</p>
+              </div>
+            </div>
+            
+            <!-- Field Map & Weather -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 card">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 class="font-semibold">Field Overview</h3>
+                </div>
+                <div class="p-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="zone-card zone-good">
+                      <div class="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 class="font-semibold text-sm">North Field A</h4>
+                          <p class="text-xs text-gray-500">Wheat</p>
+                        </div>
+                        <span class="badge badge-low">12.5 acres</span>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Health</span>
+                          <span class="font-medium">92%</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Status</span>
+                          <span class="font-medium">Excellent</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="zone-card zone-good">
+                      <div class="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 class="font-semibold text-sm">South Field B</h4>
+                          <p class="text-xs text-gray-500">Corn</p>
+                        </div>
+                        <span class="badge badge-low">15.2 acres</span>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Health</span>
+                          <span class="font-medium">88%</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Status</span>
+                          <span class="font-medium">Good</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="zone-card zone-good">
+                      <div class="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 class="font-semibold text-sm">East Field C</h4>
+                          <p class="text-xs text-gray-500">Soybeans</p>
+                        </div>
+                        <span class="badge badge-low">10.8 acres</span>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Health</span>
+                          <span class="font-medium">95%</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Status</span>
+                          <span class="font-medium">Excellent</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="zone-card zone-warning">
+                      <div class="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 class="font-semibold text-sm">West Field D</h4>
+                          <p class="text-xs text-gray-500">Barley</p>
+                        </div>
+                        <span class="badge badge-low">8.3 acres</span>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Health</span>
+                          <span class="font-medium">76%</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                          <span class="text-gray-500">Status</span>
+                          <span class="font-medium">Needs Attention</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <!-- Weather Widget -->
+                <div class="card">
+                  <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold">Weather</h3>
+                  </div>
+                  <div class="p-4 space-y-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <div class="text-3xl font-semibold">23°C</div>
+                        <p class="text-sm text-gray-500">Partly Cloudy</p>
+                      </div>
+                      <i data-lucide="cloud" class="w-12 h-12 text-gray-400"></i>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div class="flex items-center gap-2">
+                        <i data-lucide="droplets" class="w-4 h-4 text-gray-400"></i>
+                        <div>
+                          <p class="text-xs text-gray-500">Humidity</p>
+                          <p class="text-sm font-medium">65%</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <i data-lucide="wind" class="w-4 h-4 text-gray-400"></i>
+                        <div>
+                          <p class="text-xs text-gray-500">Wind</p>
+                          <p class="text-sm font-medium">12 km/h</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <p class="text-sm font-medium mb-3">5-Day Forecast</p>
+                      <div class="flex justify-between">
+                        <div class="text-center">
+                          <p class="text-xs text-gray-500 mb-1">Mon</p>
+                          <p class="text-sm font-medium">24°</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="text-xs text-gray-500 mb-1">Tue</p>
+                          <p class="text-sm font-medium">22°</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="text-xs text-gray-500 mb-1">Wed</p>
+                          <p class="text-sm font-medium">20°</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="text-xs text-gray-500 mb-1">Thu</p>
+                          <p class="text-sm font-medium">23°</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="text-xs text-gray-500 mb-1">Fri</p>
+                          <p class="text-sm font-medium">25°</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Sustainability Score -->
+                <div class="card">
+                  <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold">Sustainability Score</h3>
+                  </div>
+                  <div class="p-4 space-y-6">
+                    <div class="text-center">
+                      <div class="text-5xl font-bold text-green-700">87</div>
+                      <p class="text-sm text-gray-500 mt-1">Overall Score</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="flex items-center gap-2">
+                            <i data-lucide="droplets" class="w-4 h-4 text-blue-500"></i>
+                            <span class="text-sm font-medium">Water Efficiency</span>
+                          </div>
+                          <span class="text-sm font-semibold">92%</span>
+                        </div>
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width: 92%"></div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="flex items-center gap-2">
+                            <i data-lucide="leaf" class="w-4 h-4 text-green-700"></i>
+                            <span class="text-sm font-medium">Carbon Footprint</span>
+                          </div>
+                          <span class="text-sm font-semibold">85%</span>
+                        </div>
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width: 85%"></div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-orange-500"></i>
+                            <span class="text-sm font-medium">Energy Efficiency</span>
+                          </div>
+                          <span class="text-sm font-semibold">84%</span>
+                        </div>
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width: 84%"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Tasks -->
+            <div class="card">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="font-semibold">Upcoming Tasks</h3>
+              </div>
+              <div class="p-4 space-y-3">
+                <div class="p-3 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                  <div class="flex items-start justify-between mb-2">
+                    <h4 class="font-medium text-sm">Irrigation - West Field D</h4>
+                    <span class="badge badge-high">high</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mb-2">Soil moisture below optimal levels</p>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-500">pending</span>
+                    <div class="flex items-center gap-1 text-xs text-gray-500">
+                      <i data-lucide="clock" class="w-3 h-3"></i>
+                      <span>2h</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="p-3 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                  <div class="flex items-start justify-between mb-2">
+                    <h4 class="font-medium text-sm">Fertilizer Application - South Field B</h4>
+                    <span class="badge badge-medium">medium</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mb-2">Scheduled nutrient boost</p>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-orange-500">in-progress</span>
+                    <div class="flex items-center gap-1 text-xs text-gray-500">
+                      <i data-lucide="clock" class="w-3 h-3"></i>
+                      <span>1d</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Analytics Page -->
+        <div id="analytics-page" class="page hidden p-6 space-y-6">
+          <div>
+            <h1 class="text-3xl font-bold mb-2">Analytics</h1>
+            <p class="text-gray-500">Historical performance and insights</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="card p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-sm text-gray-500">Yield Increase</p>
+                <i data-lucide="trending-up" class="w-4 h-4 text-green-700"></i>
+              </div>
+              <div class="text-2xl font-semibold">+24%</div>
+              <p class="text-xs text-gray-500 mt-1">vs last season</p>
+            </div>
+            
+            <div class="card p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-sm text-gray-500">Water Saved</p>
+                <i data-lucide="droplets" class="w-4 h-4 text-blue-500"></i>
+              </div>
+              <div class="text-2xl font-semibold">18%</div>
+              <p class="text-xs text-gray-500 mt-1">resource optimization</p>
+            </div>
+            
+            <div class="card p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-sm text-gray-500">Carbon Reduction</p>
+                <i data-lucide="leaf" class="w-4 h-4 text-green-700"></i>
+              </div>
+              <div class="text-2xl font-semibold">-12%</div>
+              <p class="text-xs text-gray-500 mt-1">emissions reduced</p>
+            </div>
+            
+            <div class="card p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-sm text-gray-500">Efficiency Score</p>
+                <i data-lucide="award" class="w-4 h-4 text-orange-500"></i>
+              </div>
+              <div class="text-2xl font-semibold">92/100</div>
+              <p class="text-xs text-gray-500 mt-1">operational excellence</p>
+            </div>
+          </div>
+          
+          <div class="card p-6">
+            <h3 class="font-semibold mb-4">Field Performance Trends</h3>
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm font-medium">North Field A</span>
+                  <span class="text-sm text-gray-500">92%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 92%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm font-medium">South Field B</span>
+                  <span class="text-sm text-gray-500">88%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 88%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm font-medium">East Field C</span>
+                  <span class="text-sm text-gray-500">95%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 95%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm font-medium">West Field D</span>
+                  <span class="text-sm text-gray-500">76%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 76%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tasks Page -->
+        <div id="tasks-page" class="page hidden p-6 space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-3xl font-bold mb-2">Tasks</h1>
+              <p class="text-gray-500">Manage field operations and schedules</p>
+            </div>
+            <button class="btn btn-primary">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              New Task
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="card">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-start justify-between">
+                  <i data-lucide="circle" class="w-5 h-5 text-gray-400"></i>
+                  <span class="badge badge-high">high</span>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-semibold mb-2">Irrigation - West Field D</h3>
+                <p class="text-sm text-gray-500 mb-4">Soil moisture below optimal levels</p>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-gray-500">pending</span>
+                  <span class="text-gray-500">Due Today</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-start justify-between">
+                  <i data-lucide="clock" class="w-5 h-5 text-orange-500"></i>
+                  <span class="badge badge-medium">medium</span>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-semibold mb-2">Fertilizer Application - South Field B</h3>
+                <p class="text-sm text-gray-500 mb-4">Scheduled nutrient boost</p>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-orange-500">in-progress</span>
+                  <span class="text-gray-500">Due Tomorrow</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-start justify-between">
+                  <i data-lucide="circle" class="w-5 h-5 text-gray-400"></i>
+                  <span class="badge badge-low">low</span>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-semibold mb-2">pH Testing - North Field A</h3>
+                <p class="text-sm text-gray-500 mb-4">Regular soil pH monitoring</p>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-gray-500">pending</span>
+                  <span class="text-gray-500">Due in 3 days</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Settings Page -->
+        <div id="settings-page" class="page hidden p-6 space-y-6">
+          <div>
+            <h1 class="text-3xl font-bold mb-2">Settings</h1>
+            <p class="text-gray-500">Manage your farm and system preferences</p>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="user" class="w-5 h-5 text-green-700"></i>
+                  <h3 class="font-semibold">Farm Profile</h3>
+                </div>
+                <p class="text-sm text-gray-500">Update your farm information</p>
+              </div>
+              <div class="p-4 space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Farm Name</label>
+                  <input type="text" value="Green Valley Farm">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Location</label>
+                  <input type="text" value="Central Valley, CA">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Owner</label>
+                  <input type="text" value="John Smith">
+                </div>
+                <button class="btn btn-primary">Save Changes</button>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="bell" class="w-5 h-5 text-green-700"></i>
+                  <h3 class="font-semibold">Notifications</h3>
+                </div>
+                <p class="text-sm text-gray-500">Configure alert preferences</p>
+              </div>
+              <div class="p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium text-sm">Critical Alerts</p>
+                    <p class="text-xs text-gray-500">Urgent field conditions</p>
+                  </div>
+                  <div class="switch active" onclick="this.classList.toggle('active')">
+                    <div class="switch-handle"></div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium text-sm">Task Reminders</p>
+                    <p class="text-xs text-gray-500">Upcoming scheduled tasks</p>
+                  </div>
+                  <div class="switch active" onclick="this.classList.toggle('active')">
+                    <div class="switch-handle"></div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium text-sm">Weather Alerts</p>
+                    <p class="text-xs text-gray-500">Severe weather warnings</p>
+                  </div>
+                  <div class="switch active" onclick="this.classList.toggle('active')">
+                    <div class="switch-handle"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      body.classList.add('dark');
+    }
+    
+    themeToggle.addEventListener('click', () => {
+      body.classList.toggle('dark');
+      const newTheme = body.classList.contains('dark') ? 'dark' : 'light';
+      localStorage.setItem('theme', newTheme);
+      lucide.createIcons();
+    });
+    
+    // Navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    const pages = document.querySelectorAll('.page');
+    
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const targetPage = item.dataset.page;
+        
+        // Update active nav item
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // Show target page
+        pages.forEach(page => {
+          if (page.id === `${targetPage}-page`) {
+            page.classList.remove('hidden');
+          } else {
+            page.classList.add('hidden');
+          }
+        });
+        
+        // Reinitialize icons
+        lucide.createIcons();
+      });
+    });
+  </script>
+</body>
+</html>
