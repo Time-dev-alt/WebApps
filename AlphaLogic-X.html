@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NeuroForge — AI Web App Builder (Standalone)</title>
+<style>
+  :root{
+    --bg:#071126; --glass:rgba(255,255,255,0.04);
+    --accent:#6EE7B7; --muted:#9aa8c3; --card:#0f1b2b;
+    --glass-border: rgba(255,255,255,0.06);
+    font-family: Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(110,231,183,0.04), transparent 10%),
+    radial-gradient(1000px 500px at 90% 90%, rgba(114,144,255,0.03), transparent 10%),
+    var(--bg); color:#e6f0ff}
+  /* Layout */
+  .app{display:grid;grid-template-columns:360px 1fr 420px;gap:18px;padding:18px;height:100vh}
+  .left,.center,.right{border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid var(--glass-border);padding:14px;overflow:auto}
+  .header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#8cb7ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#032;letter-spacing:0.6px}
+  h1{font-size:16px;margin:0}
+  .muted{color:var(--muted);font-size:12px}
+
+  /* Left: Chat */
+  .chat{display:flex;flex-direction:column;height:calc(100% - 66px)}
+  .messages{flex:1;overflow:auto;padding:6px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:86%;padding:10px 12px;border-radius:10px;line-height:1.35}
+  .msg.ai{align-self:flex-start;background:linear-gradient(180deg, rgba(110,231,183,0.12), rgba(110,231,183,0.06));color:#052;}
+  .msg.user{align-self:flex-end;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));color:#e6f0ff}
+  .chat-controls{display:flex;gap:8px;margin-top:8px}
+  input[type="text"]{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  button{padding:10px 12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#7bb1ff);color:#032;font-weight:600;cursor:pointer}
+  .small{padding:8px 10px;font-size:13px}
+
+  /* Center: Canvas & Palette */
+  .toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .canvas-wrap{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px dashed rgba(255,255,255,0.03)}
+  #canvas{min-height:520px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));border-radius:8px;position:relative;padding:18px;overflow:auto}
+  .palette{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:10px 12px;border-radius:8px;background:var(--card);cursor:grab;border:1px solid rgba(255,255,255,0.02)}
+  .component{position:absolute;padding:10px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);cursor:move;min-width:80px;min-height:36px;box-shadow:0 8px 20px rgba(1,6,20,0.6)}
+  .component .resize{position:absolute;right:6px;bottom:6px;width:14px;height:14px;border-radius:3px;background:rgba(255,255,255,0.06);cursor:se-resize}
+
+  /* Right: Inspector + Upload */
+  .inspector h3{margin:0 0 8px 0}
+  .control{margin-bottom:8px}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+  textarea{width:100%;min-height:120px;padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit}
+  .uploads{display:flex;gap:8px;align-items:center}
+  .uploads input{display:none}
+  .filebtn{padding:8px 10px;border-radius:8px;background:linear-gradient(90deg,#2b3b55,#1b2a3d);cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+  .footer-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .linklike{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+
+  /* tiny details */
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  .badge{font-size:11px;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;color:var(--muted)}
+  .loader{display:inline-block;width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,var(--accent),#7bb1ff);animation:spin 1s linear infinite}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  pre{white-space:pre-wrap;background:rgba(0,0,0,0.15);padding:10px;border-radius:8px;overflow:auto}
+  footer{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+  /* Responsive */
+  @media (max-width:1100px){.app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;height:auto;padding:12px}.center{order:2}.right{order:3}.left{order:1;height:320px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="left">
+    <div class="header">
+      <div class="logo">NF</div>
+      <div>
+        <h1>NeuroForge Builder</h1>
+        <div class="muted">AI-assisted web app creator</div>
+      </div>
+    </div>
+
+    <div class="chat">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <div class="badge">Model</div>
+        <select id="modelSelect" style="flex:1;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit">
+          <option value="gpt-4o-mini">gpt-4o-mini (default)</option>
+          <option value="x-ai/grok-4.1-fast:free">x-ai/grok-4.1-fast:free</option>
+          <option value="claude-3.7-sonnet">claude-3.7-sonnet</option>
+        </select>
+      </div>
+
+      <div class="messages" id="messages" aria-live="polite"></div>
+
+      <div class="chat-controls">
+        <input id="userInput" placeholder="Ask the AI for app code, explain layout, or analyze an image..." />
+        <button id="sendBtn" class="small">Send</button>
+        <button id="imgBtn" class="small" title="Upload image for AI">📷</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <div class="muted">Status:</div>
+        <div id="status" class="muted">idle</div>
+      </div>
+    </div>
+
+    <footer>
+      Built for you • Drag components into canvas • Upload screenshots to let AI analyze UI
+    </footer>
+  </div>
+
+  <div class="center">
+    <div class="toolbar">
+      <div>
+        <div style="font-weight:700">Canvas</div>
+        <div class="muted" style="font-size:12px">Create layout — drag & drop, resize, then ask AI to export app code</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="exportBtn">Ask AI to Generate Full Web App</button>
+        <button id="downloadBtn" class="linklike">Download HTML</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:space-between">
+        <div class="palette" id="palette">
+          <div class="chip" data-type="div">Container</div>
+          <div class="chip" data-type="btn">Button</div>
+          <div class="chip" data-type="text">Text</div>
+          <div class="chip" data-type="img">Image</div>
+          <div class="chip" data-type="input">Input</div>
+        </div>
+        <div class="muted">Tip: double-click a component to edit text</div>
+      </div>
+
+      <div id="canvas" aria-label="Design canvas" tabindex="0">
+        <!-- placeholder layout -->
+        <div class="component" data-component-id="c-hero" style="left:20px;top:20px;width:calc(100% - 80px);min-height:120px;">
+          <strong>Hero Section</strong>
+          <div class="resize"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="inspector">
+      <h3>Inspector</h3>
+      <div class="control">
+        <label>Selected component ID</label>
+        <input id="selectedId" readonly style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
+      </div>
+
+      <div class="control">
+        <label>HTML / Notes to AI</label>
+        <textarea id="notes" placeholder="Describe what you want the AI to do with this layout (e.g., make mobile-responsive, add auth, implement payments)"></textarea>
+      </div>
+
+      <div class="control">
+        <label>Upload image (screenshot / design)</label>
+        <div class="uploads">
+          <label class="filebtn" for="fileInput">Choose file</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div id="fileName" class="muted">No file</div>
+        </div>
+      </div>
+
+      <div class="footer-actions">
+        <button id="analyzeImage" class="small">Analyze Image with AI</button>
+        <button id="clearCanvas" class="small">Clear Canvas</button>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="muted">Export / Preview</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="previewBtn" class="linklike">Open Preview</button>
+          <button id="htmlViewBtn" class="linklike">View HTML</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <div class="muted">API Key (paste here) — never share publicly</div>
+      <input id="apiKey" placeholder="API_KEY" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit;margin-top:8px" />
+      <div class="hint">You can also hardcode the key in the JS constant for a one-file experience. See the top of the script.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  NeuroForge Web App Builder - Standalone
+  - Replace OPENROUTER_API_KEY with your key OR paste key in UI
+  - Uses OpenRouter chat completions endpoint for text + images
+  - For image analysis, we send base64 image using message content type "image_url" (data URL)
+  - Some models support vision; pick a vision-capable model in the Model select.
+  Docs reference: OpenRouter API / Multimodal. (See inline credits after UI)
+*/
+
+const OPENROUTER_API_KEY = ""; // optionally hardcode. Otherwise paste in the input on the right.
+const API_BASE = "https://openrouter.ai/api/v1/chat/completions"; // per OpenRouter docs
+
+/* ---------- utility UI helpers ---------- */
+const messagesEl = document.getElementById('messages');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const imgBtn = document.getElementById('imgBtn');
+const statusEl = document.getElementById('status');
+const apiKeyInput = document.getElementById('apiKey');
+const modelSelect = document.getElementById('modelSelect');
+
+function pushMessage(text, who='ai'){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (who==='ai' ? 'ai' : 'user');
+  d.innerText = text;
+  messagesEl.appendChild(d);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+/* ---------- Chat / API interaction ---------- */
+async function callOpenRouter(messages, extra={}) {
+  statusEl.innerText = 'calling AI...';
+  const key = OPENROUTER_API_KEY || apiKeyInput.value.trim();
+  if(!key) { alert("Please provide your OpenRouter API key (or set OPENROUTER_API_KEY in the file)."); statusEl.innerText='idle'; throw new Error("No API key"); }
+
+  const model = modelSelect.value;
+
+  const body = {
+    model,
+    messages,
+    stream: false,
+    ...extra
+  };
+
+  // POST to OpenRouter
+  const res = await fetch(API_BASE, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + key,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if(!res.ok){
+    const txt = await res.text();
+    statusEl.innerText = 'error';
+    throw new Error("API Error: " + res.status + " - " + txt);
+  }
+  const data = await res.json();
+  statusEl.innerText = 'idle';
+  // typical OpenRouter response: choices[0].message.content
+  if(data?.choices && data.choices[0]?.message?.content){
+    return data.choices[0].message.content;
+  } else if (data?.choices && data.choices[0]?.delta) {
+    // fallback for streaming-like shape
+    return JSON.stringify(data);
+  } else {
+    return JSON.stringify(data);
+  }
+}
+
+/* ---------- chat send ---------- */
+sendBtn.onclick = async () => {
+  const txt = userInput.value.trim();
+  if(!txt) return;
+  pushMessage(txt,'user');
+  userInput.value='';
+  try{
+    pushMessage("Thinking…","ai");
+    const lastAi = messagesEl.querySelector('.msg.ai:last-child');
+    // build messages for API: system + conversation
+    const messages = [
+      {role: "system", content: "You are NeuroForge, an expert AI web app builder. Reply helpfully and return code when asked."},
+      {role: "user", content: txt}
+    ];
+    const reply = await callOpenRouter(messages, {temperature:0.2});
+    // replace last 'Thinking…' with answer
+    lastAi.innerText = reply;
+  }catch(e){
+    pushMessage("Error: " + (e.message||e),'ai');
+  }
+};
+
+/* ---------- image upload for AI analysis ---------- */
+const fileInput = document.getElementById('fileInput');
+const fileNameEl = document.getElementById('fileName');
+const analyzeBtn = document.getElementById('analyzeImage');
+let lastImageDataURL = null;
+
+imgBtn.onclick = ()=> fileInput.click();
+fileInput.onchange = async (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  fileNameEl.innerText = f.name;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    lastImageDataURL = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+};
+
+analyzeBtn.onclick = async () => {
+  if(!lastImageDataURL){ alert("Choose an image first"); return; }
+  pushMessage("Uploaded an image — analyzing...", "user");
+  pushMessage("Analyzing image…","ai");
+  const lastAi = messagesEl.querySelector('.msg.ai:last-child');
+  try{
+    const messages = [
+      {role:"system", content:"You are a helpful assistant that analyzes UIs and design screenshots. Provide a structured summary of detected elements, suggestions for responsiveness and accessibility, and optionally provide HTML/CSS code snippets to reproduce the layout."},
+      // user text first, then image as per docs
+      {role:"user", content:"Please analyze this image and give me a structured summary and reproduce HTML/CSS if possible."},
+      {role:"user", content:[{type:"image_url", image_url:lastImageDataURL}]}
+    ];
+    // Note: OpenRouter accepts image entries in messages as described in docs.
+    const reply = await callOpenRouter(messages, {temperature:0.1});
+    lastAi.innerText = reply;
+  }catch(e){
+    lastAi.innerText = "Error analyzing image: " + e.message;
+  }
+};
+
+/* ---------- Canvas interactions (drag/drop, resize, edit) ---------- */
+const palette = document.getElementById('palette');
+const canvas = document.getElementById('canvas');
+let compCounter = 0;
+let selectedComp = null;
+
+palette.addEventListener('click', (ev) => {
+  const chip = ev.target.closest('.chip');
+  if(!chip) return;
+  const type = chip.dataset.type;
+  addComponent(type, 40 + compCounter*8, 40 + compCounter*6);
+});
+
+function addComponent(type, left=40, top=40){
+  compCounter++;
+  const id = 'comp-' + Date.now() + '-' + compCounter;
+  const el = document.createElement('div');
+  el.className = 'component';
+  el.dataset.componentId = id;
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+  el.style.width = '220px';
+  el.innerHTML = (type==='btn' ? '<button class="small">Button</button>' : (type==='img' ? '<img src="https://picsum.photos/300/150" style="max-width:100%;border-radius:6px;" />' : (type==='input' ? '<input placeholder="Input" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03)" />' : (type==='text' ? '<div>Editable text</div>' : '<div>Container</div>')))) + '<div class="resize"></div>';
+  canvas.appendChild(el);
+  makeDraggable(el);
+  el.addEventListener('dblclick', ()=> {
+    const cur = el.querySelector('div,button,input,img')?.innerText || '';
+    const newText = prompt('Edit inner HTML/text (simple):', el.innerText);
+    if(newText !== null) el.innerHTML = newText + '<div class="resize"></div>';
+  });
+}
+
+function makeDraggable(el){
+  let ox=0,oy=0,dragging=false;
+  el.addEventListener('pointerdown', (e)=>{
+    if(e.target.classList.contains('resize')) return; // skip resize start
+    dragging=true;
+    ox = e.clientX - el.offsetLeft;
+    oy = e.clientY - el.offsetTop;
+    selectedComp = el;
+    document.getElementById('selectedId').value = el.dataset.componentId;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointerup',(e)=>{dragging=false;});
+  el.addEventListener('pointermove',(e)=>{
+    if(!dragging) return;
+    let nx = e.clientX - ox;
+    let ny = e.clientY - oy;
+    if(nx<6) nx=6; if(ny<6) ny=6;
+    el.style.left = nx + 'px'; el.style.top = ny + 'px';
+  });
+  // resize grip
+  const grip = el.querySelector('.resize');
+  grip.addEventListener('pointerdown', (e)=>{
+    e.stopPropagation();
+    let startW = el.offsetWidth, startH = el.offsetHeight;
+    let sx = e.clientX, sy = e.clientY;
+    function onMove(ev){
+      const nw = Math.max(60, startW + (ev.clientX - sx));
+      const nh = Math.max(28, startH + (ev.clientY - sy));
+      el.style.width = nw + 'px';
+      el.style.height = nh + 'px';
+    }
+    function onUp(){
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+}
+
+/* ---------- Export / preview logic ---------- */
+function snapshotHTML(){
+  // produce minimal HTML of canvas contents
+  const clones = [];
+  Array.from(canvas.children).forEach(c => {
+    const copy = c.cloneNode(true);
+    // inline styles only for position/size and inner content
+    const style = getComputedStyle(c);
+    copy.style.position='absolute';
+    copy.style.left = c.style.left;
+    copy.style.top = c.style.top;
+    copy.style.width = c.style.width;
+    copy.style.height = c.style.height;
+    clones.push(copy.outerHTML);
+  });
+  const inner = clones.join('\n');
+  const full = `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeuroForge Export</title>
+<style>
+  body{font-family:Inter,system-ui,Arial;background:#071126;color:#e6f0ff;padding:30px}
+  .canvas{position:relative;width:100%;min-height:600px;border-radius:8px;background:linear-gradient(180deg,#051025,#071127);padding:18px}
+  .component{position:absolute;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px}
+</style>
+</head>
+<body>
+  <div class="canvas">${inner}</div>
+</body></html>`;
+  return full;
+}
+
+document.getElementById('previewBtn').onclick = ()=>{
+  const html = snapshotHTML();
+  const w = window.open();
+  w.document.write(html);
+};
+
+document.getElementById('htmlViewBtn').onclick = ()=>{
+  const html = snapshotHTML();
+  const w = window.open();
+  w.document.write('<pre>' + escapeHtml(html) + '</pre>');
+};
+
+document.getElementById('downloadBtn').onclick = ()=>{
+  const html = snapshotHTML();
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'neuroforge_export.html';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+/* ---------- Ask AI to generate the full web app from layout ---------- */
+document.getElementById('exportBtn').onclick = async ()=>{
+  pushMessage("Please generate a full web app for my current layout and notes.", 'user');
+  pushMessage("Generating web app… This may take a bit.", 'ai');
+  const lastAi = messagesEl.querySelector('.msg.ai:last-child');
+
+  const htmlSnapshot = snapshotHTML();
+  const notes = document.getElementById('notes').value.trim() || "Make responsive, modern, lightweight, explain changes.";
+  // Build a robust prompt for the model
+  const system = {role:'system', content:'You are NeuroForge — generate production-ready single-file HTML/CSS/JS for a web app based on the provided canvas html snapshot. Provide the final HTML only inside a markdown code block labeled ```html``` so it can be copied easily. If there are external dependencies, explain them briefly after the code block.'};
+  const user = {role:'user', content:`Here is the minimal canvas snapshot (HTML) that represents the layout. Notes: ${notes}\n\nCanvas snapshot:\n\n${htmlSnapshot}\n\nGenerate a complete, responsive, accessible single-file HTML web app implementing this layout. Keep assets inline and minimize external dependencies. Provide comments for where to customize.`};
+
+  try{
+    const reply = await callOpenRouter([system,user], {temperature:0.15, max_tokens: 2000});
+    lastAi.innerText = reply;
+    // If the AI returned code inside a markdown block, try to extract it to offer download
+    const code = extractCodeBlock(reply, 'html') || reply;
+    if(code){
+      // create download
+      const blob = new Blob([code], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'neuroforge_generated_app.html';
+      a.innerText = 'Download generated app';
+      lastAi.appendChild(document.createElement('br'));
+      const linkBtn = document.createElement('button');
+      linkBtn.className='small';
+      linkBtn.onclick = ()=> a.click();
+      linkBtn.innerText = 'Download generated app';
+      lastAi.appendChild(linkBtn);
+    }
+  }catch(e){
+    lastAi.innerText = "Error generating app: " + e.message;
+  }
+};
+
+/* ---------- helpers ---------- */
+function escapeHtml(s){
+  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+function extractCodeBlock(text, lang){
+  const re = new RegExp("```" + (lang||'') + "\\s*([\\s\\S]*?)```","m");
+  const m = text.match(re);
+  if(m) return m[1].trim();
+  return null;
+}
+
+/* ---------- small niceties ---------- */
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && (document.activeElement===userInput)) { sendBtn.click(); e.preventDefault(); }
+});
+document.getElementById('clearCanvas').onclick = ()=> {
+  if(!confirm("Clear all components?")) return;
+  canvas.innerHTML = '';
+};
+pushMessage("Welcome! Ask me to analyze a UI or generate a web app from your canvas.", 'ai');
+
+</script>
+
+<!--
+References & notes:
+- Uses OpenRouter unified API at /api/v1/chat/completions (OpenRouter docs support chat & multimodal). Models that support images will accept base64 data URLs or URLs in messages. See docs for model capabilities and streaming options.
+  Docs: OpenRouter API overview; Multimodal guide; Images guide; Authentication; Streaming. 
+-->
+</body>
+</html>
